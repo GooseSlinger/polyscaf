@@ -1,4 +1,4 @@
 from pathlib import Path
 
-# Базовая директория проекта (рядом с main.py)
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Базовая директория проекта: текущая папка, где запущена команда
+BASE_DIR = Path.cwd()
