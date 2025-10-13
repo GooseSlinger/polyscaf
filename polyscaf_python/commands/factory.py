@@ -2,6 +2,7 @@ import typer
 
 from polyscaf_python.settings import BASE_DIR
 from polyscaf_python.utils import (
+    camel_to_snake,
     check_file_exists,
     create_folder_with_init,
     create_git_ignore,
@@ -18,23 +19,22 @@ def make_factory(name: str) -> None:
     create_folder_with_init(path)
     create_git_ignore(path)
 
-    file_path = path / f"{name}Factory.py"
+    snake_name = camel_to_snake(name)
+    file_path = path / f"{snake_name}_factory.py"
     check_file_exists(file_path)
+
+    class_name = f"{name}Factory"
 
     file_path.write_text(
         "import factory\n"
-        "from factory.alchemy import SQLAlchemyModelFactory\n"
-        "from models import SomeModel\n"
-        "from database import SessionLocal\n\n"
-        f"class {name}(SQLAlchemyModelFactory):\n"
+        "from factory.alchemy import SQLAlchemyModelFactory\n\n"
+        "from database import SessionLocal\n"
+        f"from models.{snake_name}_model import {name}\n\n"
+        f"class {class_name}(SQLAlchemyModelFactory):\n"
         "    class Meta:\n"
-        "        model = SomeModel\n"
+        f"        model = {name}\n"
         "        sqlalchemy_session = SessionLocal()\n"
         "        sqlalchemy_session_persistence = 'commit'\n\n"
-        "    name = factory.Iterator([ # колонка в таблице\n"
-        "        'data1', # данные для колонки\n"
-        "        'data2', \n"
-        "        'data3', \n"
-        "    ])"
+        f"    name = factory.Sequence(lambda n: f\"{snake_name}_{{n}}\")\n"
     )
     typer.echo(f"✅ Фабрика {name} создана")

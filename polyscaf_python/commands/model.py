@@ -14,7 +14,8 @@ def make_model(name: str) -> None:
     """Сгенерировать файл модели SQLAlchemy."""
     path = BASE_DIR / "models"
     create_folder_with_init(path)
-    file_path = path / f"{name}Model.py"
+    snake_name = camel_to_snake(name)
+    file_path = path / f"{snake_name}_model.py"
     check_file_exists(file_path)
     create_git_ignore(path)
 
