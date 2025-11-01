@@ -7,6 +7,7 @@ from polyscaf_python.utils import (
     create_folder_with_init,
     create_git_ignore,
     pluralize,
+    update_init_exports,
 )
 
 
@@ -22,15 +23,17 @@ def make_model(name: str) -> None:
     table_name = camel_to_snake(name)
 
     file_path.write_text(
+        "from datetime import datetime\n"
+        "from typing import Optional\n\n"
         "from database import Base\n"
-        "from sqlalchemy import Column, Integer, String, DateTime\n"
-        "from sqlalchemy.sql import func\n"
-        "from sqlalchemy.orm import relationship\n\n"
+        "from sqlalchemy import DateTime, String, func\n"
+        "from sqlalchemy.orm import Mapped, mapped_column, relationship\n\n"
         f"class {name}(Base):\n"
         f"    __tablename__ = '{pluralize(table_name.lower())}'\n\n"
-        f"    id = Column(Integer, primary_key=True, index=True)\n"
-        f"    name = Column(String, index=True)\n"
-        f"    created_at = Column(DateTime(timezone=True), server_default=func.now())\n"
-        f"    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)\n"
+        f"    id: Mapped[int] = mapped_column(primary_key=True, index=True)\n"
+        f"    name: Mapped[str] = mapped_column(String, index=True)\n"
+        f"    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())\n"
+        f"    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)\n"
     )
+    update_init_exports(path, f"{snake_name}_model", name)
     typer.echo(f"✅ Модель {name} создана")

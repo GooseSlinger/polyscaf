@@ -6,6 +6,7 @@ from polyscaf_python.utils import (
     check_file_exists,
     create_folder_with_init,
     create_git_ignore,
+    update_init_exports,
 )
 
 
@@ -30,5 +31,11 @@ def make_route(name: str) -> None:
         f"# @router.get('/{snake_name}')\n"
         f"# async def create_{snake_name}(data: {name}Schema, service: {name}Service = Depends(get_{snake_name}_service)):\n"
         f"#     return await service.create_{snake_name}(data)\n"
+    )
+    update_init_exports(
+        path,
+        f"{snake_name}_route",
+        "router",
+        alias=f"{name}Router",
     )
     typer.echo(f"✅ Путь {name} создан")

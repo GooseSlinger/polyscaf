@@ -6,6 +6,7 @@ from polyscaf_python.utils import (
     check_file_exists,
     create_folder_with_init,
     create_git_ignore,
+    update_init_exports,
 )
 
 
@@ -27,4 +28,5 @@ def make_service(name: str) -> None:
         f"    def example_method(self) -> str:\n"
         f"        return 'Hello from {name}'\n"
     )
+    update_init_exports(path, f"{snake_name}_service", f"{name}Service")
     typer.echo(f"✅ Сервис {name} создан")
