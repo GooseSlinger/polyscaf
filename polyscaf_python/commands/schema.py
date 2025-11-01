@@ -6,6 +6,7 @@ from polyscaf_python.utils import (
     check_file_exists,
     create_folder_with_init,
     create_git_ignore,
+    update_init_exports,
 )
 
 
@@ -23,4 +24,5 @@ def make_schema(name: str) -> None:
         f"class {name}Schema(BaseModel):\n"
         f"    name: str\n"
     )
+    update_init_exports(path, f"{snake_name}_schema", f"{name}Schema")
     typer.echo(f"✅ Схема {name} создана")
