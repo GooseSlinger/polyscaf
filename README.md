@@ -12,25 +12,38 @@
 
 ### Через `pipx`
 
+Если `pipx` ещё не установлен:
+
 ```bash
 brew install pipx
 pipx ensurepath
-pipx install .
 ```
 
-Если `pipx` уже установлен, достаточно:
+Первичная установка из корня этого репозитория:
 
 ```bash
 pipx install .
 ```
 
-## Проверка
+Если `pipx` уже установлен, можно сразу:
+
+```bash
+pipx install .
+```
+
+Если ты уже ставил `polyscaf` и хочешь подтянуть изменения из этой папки, используй:
+
+```bash
+pipx install --force .
+```
+
+После установки проверь:
 
 ```bash
 polyscaf --help
 ```
 
-## Сборка
+## Проверка
 
 ```bash
 python -m build
@@ -48,6 +61,8 @@ python -m pip install build
 pipx uninstall polyscaf
 pipx install --force .
 ```
+
+Если нужно просто обновить локальную установленную версию после правок в этом репозитории, обычно достаточно второй команды.
 
 ## Пример использования
 
