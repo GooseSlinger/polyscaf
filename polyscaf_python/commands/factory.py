@@ -23,18 +23,10 @@ def make_factory(name: str) -> None:
     file_path = path / f"{snake_name}_factory.py"
     check_file_exists(file_path)
 
-    class_name = f"{name}Factory"
-
     file_path.write_text(
-        "import factory\n"
-        "from factory.alchemy import SQLAlchemyModelFactory\n\n"
-        "from database import SessionLocal\n"
-        f"from models.{snake_name}_model import {name}\n\n"
-        f"class {class_name}(SQLAlchemyModelFactory):\n"
-        "    class Meta:\n"
-        f"        model = {name}\n"
-        "        sqlalchemy_session = SessionLocal()\n"
-        "        sqlalchemy_session_persistence = 'commit'\n\n"
-        f"    name = factory.Sequence(lambda n: f\"{snake_name}_{{n}}\")\n"
+        f"# {name}Factory scaffold.\n"
+        "# Этот шаблон оставлен как заготовка, потому что async-стек проекта\n"
+        "# не даёт простого безопасного SessionLocal для factory-boy.\n"
+        "# Если вам реально нужны фабрики, добавьте отдельную sync-сессию вручную.\n"
     )
     typer.echo(f"✅ Фабрика {name} создана")

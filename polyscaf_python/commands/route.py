@@ -20,17 +20,12 @@ def make_route(name: str) -> None:
     create_git_ignore(path)
 
     file_path.write_text(
-        "from fastapi import APIRouter, Depends\n"
-        "from sqlalchemy.orm import Session\n\n"
-        "from database import get_db\n"
-        f"from schemas.{snake_name}_schema import {name}Schema\n"
-        f"from service.{snake_name}_service import {name}Service\n\n"
+        "from fastapi import APIRouter\n\n"
         "router = APIRouter()\n\n"
-        f"def get_{snake_name}_service(db: Session = Depends(get_db)):\n"
-        f"    return {name}Service(db)\n\n"
+        f"# Пример endpoint'а для этого ресурса:\n"
         f"# @router.get('/{snake_name}')\n"
-        f"# async def create_{snake_name}(data: {name}Schema, service: {name}Service = Depends(get_{snake_name}_service)):\n"
-        f"#     return await service.create_{snake_name}(data)\n"
+        f"# async def read_{snake_name}():\n"
+        f"#     return {{\"detail\": \"Implement {name} endpoints here\"}}\n"
     )
     update_init_exports(
         path,

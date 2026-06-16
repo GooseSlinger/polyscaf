@@ -28,7 +28,7 @@ def create_folder_with_init(path: Path, *, is_database: bool = False) -> None:
     if not init_path.exists():
         content = ""
         if is_database:
-            content += "from .database import SessionLocal, engine, Base\n\n"
+            content += "from .database import AsyncSessionLocal, engine, Base, get_db\n\n"
         content += f"{AUTO_SECTION_START}\n{AUTO_SECTION_END}\n"
         init_path.write_text(content)
 

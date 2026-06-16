@@ -10,7 +10,7 @@ from polyscaf_python.utils import (
 
 
 def make_test(name: str) -> None:
-    """Сгенерировать заготовку API-теста на pytest."""
+    """Сгенерировать заготовку smoke-теста."""
     path = BASE_DIR / "tests"
     create_folder_with_init(path)
     snake_name = camel_to_snake(name)
@@ -19,28 +19,20 @@ def make_test(name: str) -> None:
     create_git_ignore(path)
 
     file_path.write_text(
-        "import pytest\n"
-        "from httpx import AsyncClient, ASGITransport\n\n"
+        "import unittest\n"
+        "from fastapi.testclient import TestClient\n\n"
         "from main import app\n\n"
-        "transport = ASGITransport(app=app)\n"
-        "base_url = \"http://test\"\n\n"
-        "@pytest.mark.asyncio\n"
-        f"async def test_create_{snake_name}_success():\n"
-        "    async with AsyncClient(transport=transport, base_url=base_url) as ac:\n"
-        f"        response = await ac.post(\"/{snake_name}/create\", json={{\n"
-        "            \"name\": \"Тест\",\n"
-        "            \"email\": \"newuser@example.com\"\n"
-        "        })\n"
-        "    assert response.status_code == 200\n"
-        "    assert \"успешно\" in response.text\n\n"
-        "@pytest.mark.asyncio\n"
-        f"async def test_create_{snake_name}_invalid_email():\n"
-        "    async with AsyncClient(transport=transport, base_url=base_url) as ac:\n"
-        f"        response = await ac.post(\"/{snake_name}/create\", json={{\n"
-        "            \"name\": \"Тест\",\n"
-        "            \"email\": \"notanemail\"\n"
-        "        })\n"
-        "    assert response.status_code == 422\n\n"
+        "class RootSmokeTest(unittest.TestCase):\n"
+        "    def setUp(self):\n"
+        "        self.client = TestClient(app)\n\n"
+        "    def test_root(self):\n"
+        "        response = self.client.get(\"/\")\n"
+        "        self.assertEqual(response.status_code, 200)\n"
+        "        self.assertEqual(response.json(), {\"detail\": \"Hello World!\"})\n\n"
+        "\n"
+        "if __name__ == \"__main__\":\n"
+        "    unittest.main()\n"
+        "\n"
         "# Добавляйте дополнительные тесты по мере развития приложения.\n"
     )
     typer.echo(f"✅ Тест {name} создан")

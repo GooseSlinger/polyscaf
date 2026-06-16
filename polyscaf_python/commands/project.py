@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import typer
 
 from polyscaf_python.settings import BASE_DIR
@@ -9,26 +11,15 @@ FOLDERS = [
     "routes",
     "service",
     "database",
-    "storage",
     "scripts",
 ]
 
 BASE_REQUIREMENTS = [
     "fastapi",
+    "uvicorn[standard]",
     "sqlalchemy",
     "alembic",
-    "aiohttp",
-    "uvicorn",
     "python-dotenv",
-    "dotenv",
-    "python-multipart",
-    "httpx",
-    "inflect",
-    "typer",
-    "email_validator",
-    "cryptography",
-    "pydantic",
-    "factory-boy",
 ]
 
 DB_REQUIREMENTS = {
@@ -47,111 +38,217 @@ ENV_TEMPLATES = {
     "postgres": (
         "# Настройки базы данных (PostgreSQL)\n"
         "# SQL_BASE должен указывать на существующую БД (обычно postgres),\n"
-        "# например: postgresql+psycopg2://user:password@localhost:5432/postgres\n"
-        "SQL_BASE=postgresql+psycopg2://user:password@localhost:5432/postgres\n"
+        "# например: postgresql+psycopg://user:password@localhost:5432/postgres\n"
+        "SQL_BASE=postgresql+psycopg://user:password@localhost:5432/postgres\n"
         "SQL_DATABASE={database_name}\n"
     ),
 }
 
-DATABASE_TEMPLATES = {
-    "mysql": (
-        "import os\n"
-        "from dotenv import load_dotenv\n"
-        "from typing import Optional\n\n"
-        "from sqlalchemy import create_engine, text\n"
-        "from sqlalchemy.engine.url import make_url\n"
-        "from sqlalchemy.orm import declarative_base, sessionmaker\n\n"
-        "load_dotenv()\n\n"
-        "SQLALCHEMY_DATABASE_URL = os.getenv('SQL_BASE')\n"
-        "if not SQLALCHEMY_DATABASE_URL:\n"
-        "    raise RuntimeError('Переменная для базы не установлена')\n\n"
-        "def _ensure_database_exists(database_url: Optional[str]) -> None:\n"
-        "    \"\"\"Создаёт целевую базу MySQL, если она отсутствует.\"\"\"\n"
-        "    if not database_url:\n"
-        "        return\n\n"
-        "    url = make_url(database_url)\n"
-        "    database_name = url.database\n\n"
-        "    if not database_name or not url.drivername.startswith(\"mysql\"):\n"
-        "        return\n\n"
-        "    admin_url = url.set(database=\"\")\n"
-        "    admin_engine = create_engine(admin_url, isolation_level=\"AUTOCOMMIT\")\n\n"
-        "    try:\n"
-        "        with admin_engine.connect() as conn:\n"
-        "            identifier = f\"`{{database_name.replace('`', '``')}}`\"\n"
-        "            conn.execute(text(f\"CREATE DATABASE IF NOT EXISTS {{identifier}}\"))\n"
-        "    finally:\n"
-        "        admin_engine.dispose()\n\n"
-        "_ensure_database_exists(SQLALCHEMY_DATABASE_URL)\n\n"
-        "engine = create_engine(SQLALCHEMY_DATABASE_URL)\n"
-        "SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)\n"
-        "Base = declarative_base()\n\n"
-        "def get_db():\n"
-        "    db = SessionLocal()\n"
-        "    try:\n"
-        "        yield db\n"
-        "    finally:\n"
-        "        db.close()\n"
-    ),
-    "postgres": (
-        "import os\n"
-        "from dotenv import load_dotenv\n"
-        "from typing import Optional\n\n"
-        "from sqlalchemy import create_engine, text\n"
-        "from sqlalchemy.engine.url import make_url\n"
-        "from sqlalchemy.orm import declarative_base, sessionmaker\n\n"
-        "load_dotenv()\n\n"
-        "SQLALCHEMY_DATABASE_URL = os.getenv('SQL_BASE')\n"
-        "if not SQLALCHEMY_DATABASE_URL:\n"
-        "    raise RuntimeError('Переменная для базы не установлена')\n\n"
-        "def _ensure_database_exists(database_url: Optional[str]) -> None:\n"
-        "    \"\"\"Создаёт целевую базу PostgreSQL, если она отсутствует.\"\"\"\n"
-        "    if not database_url:\n"
-        "        return\n\n"
-        "    url = make_url(database_url)\n"
-        "    database_name = url.database\n\n"
-        "    if not database_name or not url.drivername.startswith(\"postgres\"):\n"
-        "        return\n\n"
-        "    admin_url = url.set(database=\"postgres\")\n"
-        "    admin_engine = create_engine(admin_url, isolation_level=\"AUTOCOMMIT\")\n\n"
-        "    try:\n"
-        "        with admin_engine.connect() as conn:\n"
-        "            identifier = f\"\\\"{{database_name.replace('\"', '\"\"')}}\\\"\"\n"
-        "            exists = conn.execute(\n"
-        "                text(\"SELECT 1 FROM pg_database WHERE datname = :name\"),\n"
-        "                {{\"name\": database_name}},\n"
-        "            ).scalar()\n"
-        "            if not exists:\n"
-        "                conn.execute(text(f\"CREATE DATABASE {{identifier}} ENCODING 'UTF8'\"))\n"
-        "    finally:\n"
-        "        admin_engine.dispose()\n\n"
-        "_ensure_database_exists(SQLALCHEMY_DATABASE_URL)\n\n"
-        "engine = create_engine(SQLALCHEMY_DATABASE_URL)\n"
-        "SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)\n"
-        "Base = declarative_base()\n\n"
-        "def get_db():\n"
-        "    db = SessionLocal()\n"
-        "    try:\n"
-        "        yield db\n"
-        "    finally:\n"
-        "        db.close()\n"
-    ),
-}
+MYSQL_DATABASE_TEMPLATE = dedent(
+    """
+    import os
+    from typing import Optional
 
-MAIN_TEMPLATE = (
-    "from fastapi import FastAPI\n"
-    "from fastapi.staticfiles import StaticFiles\n"
-    "from database import Base, engine\n\n"
-    "app = FastAPI()\n\n"
-    "# Создание таблиц\n"
-    "Base.metadata.create_all(bind=engine)\n\n"
-    "# Монтируем папку со статическими файлами\n"
-    "app.mount(\"/files\", StaticFiles(directory=\"storage/files\"), name=\"files\")\n\n"
-    "# Подключаем роуты\n"
-    "app.include_router(Rout.router, prefix=\"/path_name\", tags=[\"User\"])\n\n"
-    "@app.get(\"/\")\n"
-    "async def root():\n"
-    "    return {\"detail\": \"Hello World!\"}\n"
-)
+    from dotenv import load_dotenv
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.engine.url import URL, make_url
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+    from sqlalchemy.orm import declarative_base
+
+    load_dotenv()
+
+    SQL_BASE = os.getenv("SQL_BASE")
+    SQL_DATABASE = os.getenv("SQL_DATABASE")
+
+    if not SQL_BASE:
+        raise RuntimeError("Переменная SQL_BASE не установлена")
+
+
+    def _resolve_database_url(sql_base: str, sql_database: Optional[str]) -> URL:
+        parsed = make_url(sql_base)
+
+        if parsed.drivername == "mysql":
+            parsed = parsed.set(drivername="mysql+pymysql")
+
+        if parsed.database:
+            return parsed
+
+        if not sql_database:
+            raise RuntimeError("В SQL_BASE не указано имя базы и отсутствует SQL_DATABASE")
+
+        return parsed.set(database=sql_database)
+
+
+    def _to_async_database_url(sync_url: URL) -> URL:
+        drivername = sync_url.drivername
+        if drivername.startswith("mysql"):
+            return sync_url.set(drivername="mysql+aiomysql")
+        return sync_url
+
+
+    def _get_async_engine_kwargs(database_url: URL) -> dict:
+        if database_url.drivername.startswith("mysql"):
+            return {"connect_args": {"init_command": "SET time_zone = '+03:00'"}}
+        return {}
+
+
+    SQLALCHEMY_DATABASE_SYNC_URL = _resolve_database_url(SQL_BASE, SQL_DATABASE)
+    SQLALCHEMY_DATABASE_ASYNC_URL = _to_async_database_url(SQLALCHEMY_DATABASE_SYNC_URL)
+
+
+    def _ensure_database_exists(database_url: URL) -> None:
+        database_name = database_url.database
+
+        if not database_name or not database_url.drivername.startswith("mysql"):
+            return
+
+        admin_url = database_url.set(database="")
+        admin_engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
+
+        try:
+            with admin_engine.connect() as conn:
+                identifier = f"`{database_name.replace('`', '``')}`"
+                conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {identifier}"))
+        finally:
+            admin_engine.dispose()
+
+
+    _ensure_database_exists(SQLALCHEMY_DATABASE_SYNC_URL)
+
+    engine = create_async_engine(
+        SQLALCHEMY_DATABASE_ASYNC_URL,
+        **_get_async_engine_kwargs(SQLALCHEMY_DATABASE_ASYNC_URL),
+    )
+    AsyncSessionLocal = async_sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+    Base = declarative_base()
+
+
+    async def get_db():
+        db = AsyncSessionLocal()
+        try:
+            yield db
+        finally:
+            await db.close()
+    """
+).strip()
+
+POSTGRES_DATABASE_TEMPLATE = dedent(
+    """
+    import os
+    from typing import Optional
+
+    from dotenv import load_dotenv
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.engine.url import URL, make_url
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+    from sqlalchemy.orm import declarative_base
+
+    load_dotenv()
+
+    SQL_BASE = os.getenv("SQL_BASE")
+    SQL_DATABASE = os.getenv("SQL_DATABASE")
+
+    if not SQL_BASE:
+        raise RuntimeError("Переменная SQL_BASE не установлена")
+
+
+    def _resolve_database_url(sql_base: str, sql_database: Optional[str]) -> URL:
+        parsed = make_url(sql_base)
+
+        if parsed.drivername == "postgresql":
+            parsed = parsed.set(drivername="postgresql+psycopg")
+
+        if parsed.database:
+            return parsed
+
+        if not sql_database:
+            raise RuntimeError("В SQL_BASE не указано имя базы и отсутствует SQL_DATABASE")
+
+        return parsed.set(database=sql_database)
+
+
+    def _to_async_database_url(sync_url: URL) -> URL:
+        drivername = sync_url.drivername
+        if drivername.startswith("postgresql"):
+            return sync_url.set(drivername="postgresql+asyncpg")
+        return sync_url
+
+
+    SQLALCHEMY_DATABASE_SYNC_URL = _resolve_database_url(SQL_BASE, SQL_DATABASE)
+    SQLALCHEMY_DATABASE_ASYNC_URL = _to_async_database_url(SQLALCHEMY_DATABASE_SYNC_URL)
+
+
+    def _ensure_database_exists(database_url: URL) -> None:
+        database_name = database_url.database
+
+        if not database_name or not database_url.drivername.startswith("postgresql"):
+            return
+
+        admin_url = database_url.set(database="postgres")
+        admin_engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
+
+        try:
+            with admin_engine.connect() as conn:
+                exists = conn.execute(
+                    text("SELECT 1 FROM pg_database WHERE datname = :name"),
+                    {"name": database_name},
+                ).scalar()
+                if not exists:
+                    identifier = f'"{database_name.replace(\'"\', \'""\')}"'
+                    conn.execute(text(f"CREATE DATABASE {identifier}"))
+        finally:
+            admin_engine.dispose()
+
+
+    _ensure_database_exists(SQLALCHEMY_DATABASE_SYNC_URL)
+
+    engine = create_async_engine(SQLALCHEMY_DATABASE_ASYNC_URL)
+    AsyncSessionLocal = async_sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+    Base = declarative_base()
+
+
+    async def get_db():
+        db = AsyncSessionLocal()
+        try:
+            yield db
+        finally:
+            await db.close()
+    """
+).strip()
+
+
+def _build_main_template(project_name: str) -> str:
+    return dedent(
+        f"""
+        from fastapi import FastAPI
+
+        import database  # noqa: F401  # Инициализация БД при старте приложения.
+
+        app = FastAPI(title="{project_name}")
+
+        # Здесь подключайте свои роуты, когда начнёте добавлять модули.
+        # from routes.user_route import router as user_router
+        # app.include_router(user_router, prefix="/users", tags=["users"])
+
+        @app.get("/")
+        async def root():
+            return {{"detail": "Hello World!"}}
+        """
+    ).strip()
+
+
+def _build_database_template(db_engine: str) -> str:
+    if db_engine == "mysql":
+        return MYSQL_DATABASE_TEMPLATE
+    return POSTGRES_DATABASE_TEMPLATE
 
 
 def make_project(
@@ -201,23 +298,24 @@ def make_project(
 
     for folder in FOLDERS:
         path = project_dir / folder
-        if not path.exists():
-            create_folder_with_init(path, is_database=(folder == "database"))
+        existed = path.exists()
+        create_folder_with_init(path, is_database=(folder == "database"))
+        if not existed:
             typer.echo(f"✅ Папка {folder} создана")
-            create_git_ignore(path)
         else:
             typer.echo(f"⚠️ Папка {folder} уже существует")
+        create_git_ignore(path)
 
     database_file = project_dir / "database" / "database.py"
     if not database_file.exists():
-        database_file.write_text(DATABASE_TEMPLATES[db_engine].format(database_name=project_slug))
+        database_file.write_text(_build_database_template(db_engine))
         typer.echo("✅ Файл database.py создан")
     else:
         typer.echo("⚠️ Файл database.py уже существует")
 
     main_file = project_dir / "main.py"
     if not main_file.exists():
-        main_file.write_text(MAIN_TEMPLATE)
+        main_file.write_text(_build_main_template(project_name))
         typer.echo("✅ Файл main.py создан")
     else:
         typer.echo("⚠️ Файл main.py уже существует")
@@ -237,5 +335,10 @@ def make_project(
     else:
         typer.echo("⚠️ Файл requirements.txt уже существует")
 
-    create_git_ignore(project_dir)
+    root_ignore = project_dir / ".gitignore"
+    if not root_ignore.exists():
+        root_ignore.write_text(".env\n.venv\nvenv\n__pycache__/\n*.pyc\n")
+        typer.echo("✅ Файл .gitignore создан")
+    else:
+        typer.echo("⚠️ Файл .gitignore уже существует")
     typer.echo(f"🎉 Проект {project_name} ({project_slug}) готов")

@@ -27,7 +27,7 @@ def make_model(name: str) -> None:
         "from typing import Optional\n\n"
         "from database import Base\n"
         "from sqlalchemy import DateTime, String, func\n"
-        "from sqlalchemy.orm import Mapped, mapped_column, relationship\n\n"
+        "from sqlalchemy.orm import Mapped, mapped_column\n\n"
         f"class {name}(Base):\n"
         f"    __tablename__ = '{pluralize(table_name.lower())}'\n\n"
         f"    id: Mapped[int] = mapped_column(primary_key=True, index=True)\n"
