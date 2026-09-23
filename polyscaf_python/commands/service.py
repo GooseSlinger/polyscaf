@@ -122,7 +122,7 @@ def make_service(
     with_: str = typer.Option(
         "",
         "--with",
-        help="Буквы для доп. файлов: m=model, s=schema, r=route. Пример: mr",
+        help="Буквы для доп. файлов: m=model, s=schema, r=route. Пример: msr",
     ),
 ) -> None:
     """Сгенерировать service и, опционально, связанные файлы.
@@ -131,6 +131,7 @@ def make_service(
       polyscaf make-service User
       polyscaf make-service User --with m
       polyscaf make-service User --with mr
+      polyscaf make-service User --with msr
 
     Флаги:
       m = model
@@ -143,6 +144,7 @@ def make_service(
         typer.echo("❌ Допустимы только буквы: m, s, r")
         raise typer.Exit(code=1)
 
+    camel_to_snake(name)
     _create_service(name)
     if "m" in parts:
         _create_model(name)

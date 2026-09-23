@@ -12,9 +12,9 @@ from polyscaf_python.utils import (
 
 def make_route(name: str) -> None:
     """Сгенерировать модуль маршрутов FastAPI."""
+    snake_name = camel_to_snake(name)
     path = BASE_DIR / "routes"
     create_folder_with_init(path)
-    snake_name = camel_to_snake(name)
     file_path = path / f"{snake_name}_route.py"
     check_file_exists(file_path)
     create_git_ignore(path)

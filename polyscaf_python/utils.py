@@ -1,3 +1,4 @@
+import keyword
 from pathlib import Path
 from typing import Any, Optional, cast
 import typer
@@ -45,11 +46,15 @@ def check_file_exists(file_path: Path) -> None:
     """Завершить команду, если файл уже существует."""
     if file_path.exists():
         typer.echo(f"❌ Файл уже существует: {file_path}")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
 
 def camel_to_snake(name: str) -> str:
     """Преобразовать CamelCase в snake_case."""
+    if not name.isidentifier() or keyword.iskeyword(name):
+        raise typer.BadParameter(
+            "Имя должно быть допустимым идентификатором Python без пробелов и разделителей пути."
+        )
     snake_case: list[str] = []
     for index, char in enumerate(name):
         if char.isupper() and index != 0:
